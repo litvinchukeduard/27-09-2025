@@ -1,5 +1,7 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from datetime import date
+
+import json
 '''
 
 VideoContent
@@ -15,17 +17,47 @@ likes/views * 100
 '''
 
 
+# {"title": "Test", "release_date": "2025-09-27"}
 @dataclass
 class VideoContent:
     title: str
+    price: int
     release_date: date
+
+    def as_json(self):
+        # return {
+        #     'title': self.title,
+        #     'release_date': self.release_date.strftime('%d-%m-%Y'), #2025-09-27 27-09-2025
+        #     'price': self.price
+        # }
+        dict = self.__dict__
+        dict['release_date'] = self.release_date.strftime('%d-%m-%Y')
+        return dict
 
     def calculateQualityNumber(self):
         raise NotImplementedError("Base class VideoContent does not have a way to calculate quality")
 
 
+# {"title": "Test", "release_date": "2025-09-27", "stars": 4, "director": "Test"}
 @dataclass
 class Movie(VideoContent):
+    stars: int
+    director: str
+
+    def __post_init__(self):
+        if not (0 <= self.stars <= 5):
+            raise ValueError("Stars can not be less than 0 or greater than 5")
+
+    def calculateQualityNumber(self):
+        return (self.stars / 5) * 100
+    
+    # def as_json(self):
+
+    
+
+# {"title": "Test", "release_date": "2025-09-27", "stars": 4, "director": "Test"}
+@dataclass
+class OldMovie(VideoContent):
     stars: int
     director: str
 
@@ -44,12 +76,12 @@ class SeriesEpisode(Movie):
 
 @dataclass
 class YouTubeVideo(VideoContent):
-    views: int
-    likes: int
+    __views: int
+    __likes: int
 
     @property
     def views(self):
-        return self.views
+        return self.__views
     
     @views.setter
     def views(self, new_value):
@@ -58,7 +90,7 @@ class YouTubeVideo(VideoContent):
         
     @property
     def likes(self):
-        return self.views
+        return self.__likes
     
     @likes.setter
     def likes(self, new_value):
@@ -69,10 +101,16 @@ class YouTubeVideo(VideoContent):
         return (self.likes / self.views) * 100
 
 if __name__ == '__main__':
-    content = VideoContent("Test", date.today())
+    content = VideoContent("Test", 100, date(1900, 1, 2))
+    # print(dir(content))
+    # print(content.__dict__)
     # content.calculateQualityNumber()
 
 
     # movie = Movie("Pulp Fiction", date.today(), 3, 'Tarantino')
     # print(movie.calculateQualityNumber())
-    video = YouTubeVideo("Test", date.today(), 1, -2)
+    # video = YouTubeVideo("Test", date.today(), 1000, 200)
+
+    with open("video.json", "w") as file:
+        json.dump(content.as_json(), file)
+    # print(video.calculateQualityNumber())
