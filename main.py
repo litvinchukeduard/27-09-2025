@@ -1,5 +1,6 @@
 from dataclasses import dataclass, asdict
 from datetime import date
+from copy import deepcopy
 
 import json
 '''
@@ -44,6 +45,10 @@ class Movie(VideoContent):
     stars: int
     director: str
 
+    def as_json(self):
+        parent_dict = super().as_json()
+        return parent_dict
+
     def __post_init__(self):
         if not (0 <= self.stars <= 5):
             raise ValueError("Stars can not be less than 0 or greater than 5")
@@ -60,6 +65,10 @@ class Movie(VideoContent):
 class OldMovie(VideoContent):
     stars: int
     director: str
+
+    def as_json(self):
+        parent_dict = super().as_json()
+        return parent_dict
 
     def __post_init__(self):
         if not (0 <= self.stars <= 5):
@@ -78,6 +87,14 @@ class SeriesEpisode(Movie):
 class YouTubeVideo(VideoContent):
     __views: int
     __likes: int
+
+    def as_json(self):
+        parent_dict = deepcopy(super().as_json())
+        del parent_dict['_YouTubeVideo__views']
+        del parent_dict['_YouTubeVideo__likes']
+        parent_dict['views'] = self.views
+        parent_dict['likes'] = self.likes
+        return parent_dict
 
     @property
     def views(self):
@@ -101,16 +118,24 @@ class YouTubeVideo(VideoContent):
         return (self.likes / self.views) * 100
 
 if __name__ == '__main__':
-    content = VideoContent("Test", 100, date(1900, 1, 2))
+    # content = VideoContent("Test", 100, date(1900, 1, 2))
     # print(dir(content))
     # print(content.__dict__)
     # content.calculateQualityNumber()
 
 
-    # movie = Movie("Pulp Fiction", date.today(), 3, 'Tarantino')
-    # print(movie.calculateQualityNumber())
-    # video = YouTubeVideo("Test", date.today(), 1000, 200)
+    # # movie = Movie("Pulp Fiction", date.today(), 3, 'Tarantino')
+    # # print(movie.calculateQualityNumber())
+    video = YouTubeVideo("Test", 100, date.today(), 1000, 200)
+
+    # # print(video.__views)
 
     with open("video.json", "w") as file:
-        json.dump(content.as_json(), file)
+        json.dump(video.as_json(), file)
     # print(video.calculateQualityNumber())
+
+    # list_one = [1, 2, 3]
+    # list_two = list_one
+    # list_two[1] = 5
+    # print(list_one)
+    # print(list_two)
