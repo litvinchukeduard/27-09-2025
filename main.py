@@ -17,6 +17,9 @@ stars/5 * 100
 likes/views * 100
 '''
 
+def get_content_from_json(json_dict: dict):
+    ...
+
 
 # {"title": "Test", "release_date": "2025-09-27"}
 @dataclass
@@ -24,6 +27,19 @@ class VideoContent:
     title: str
     price: int
     release_date: date
+
+    @staticmethod
+    def from_json(json_data):
+        print(json_data)
+        type = json_data['type']
+        if type not in CLASS_REGISTRY:
+            raise TypeError(f"Class deserialization is not possible for type '{type}'")
+        
+        cls = CLASS_REGISTRY[type] # Movie
+        del json_data['type']
+        return cls(**json_data)
+        # if type == 'Movie':
+        #     ...
 
     def as_json(self):
         # return {
@@ -33,7 +49,7 @@ class VideoContent:
         # }
         dict = deepcopy(self.__dict__)
         dict['release_date'] = self.release_date.strftime('%d-%m-%Y')
-        dict['type'] = 'VideoContent'
+        dict['type'] = self.__class__.__name__
         return dict
 
     def calculateQualityNumber(self):
@@ -86,20 +102,28 @@ class SeriesEpisode(Movie):
 
 @dataclass
 class YouTubeVideo(VideoContent):
-    __views: int
-    __likes: int
+    _views: int
+    _likes: int
+
+    @staticmethod
+    def from_json(json_data: dict):
+        json_data['_views'] = json_data['views']
+        json_data['_likes'] = json_data['likes']
+        del json_data['likes']
+        del json_data['views']
+        return VideoContent.from_json(json_data)
 
     def as_json(self):
         parent_dict = super().as_json()
-        del parent_dict['_YouTubeVideo__views']
-        del parent_dict['_YouTubeVideo__likes']
+        del parent_dict['_views']
+        del parent_dict['_likes']
         parent_dict['views'] = self.views
         parent_dict['likes'] = self.likes
         return parent_dict
 
     @property
     def views(self):
-        return self.__views
+        return self._views
     
     @views.setter
     def views(self, new_value):
@@ -108,7 +132,7 @@ class YouTubeVideo(VideoContent):
         
     @property
     def likes(self):
-        return self.__likes
+        return self._likes
     
     @likes.setter
     def likes(self, new_value):
@@ -117,6 +141,13 @@ class YouTubeVideo(VideoContent):
 
     def calculateQualityNumber(self):
         return (self.likes / self.views) * 100
+    
+
+CLASS_REGISTRY = {
+    'Movie': Movie,
+    'YouTubeVideo': YouTubeVideo,
+    'OldMovie': OldMovie
+}
 
 if __name__ == '__main__':
     # content = VideoContent("Test", 100, date(1900, 1, 2))
@@ -124,20 +155,31 @@ if __name__ == '__main__':
     # print(content.__dict__)
     # content.calculateQualityNumber()
 
+    m = Movie("Pulp Fiction", 100, date.today(), 3, 'Tarantino')
+    print(m)
 
-    # # movie = Movie("Pulp Fiction", date.today(), 3, 'Tarantino')
-    # # print(movie.calculateQualityNumber())
+    # class_name = Movie
+    # m_2 = class_name("Pulp Fiction", 100, date.today(), 3, 'Tarantino')
+    # print(m_2)
+
+
+    # movie = Movie("Pulp Fiction", 100, date.today(), 3, 'Tarantino')
+    # # # print(movie.calculateQualityNumber())
     video = YouTubeVideo("Test", 100, date.today(), 1000, 200)
-    print(dir(video))
+    # # print(dir(video))
+    # # print(video.__class__.__name__)
 
-    # # print(video.__views)
+    # # # print(video.__views)
 
     with open("video.json", "w") as file:
         json.dump(video.as_json(), file)
-    # print(video.calculateQualityNumber())
+    # # print(video.calculateQualityNumber())
+    print(YouTubeVideo.from_json({"title": "Test", "price": 100, "release_date": "27-09-2025", "type": "YouTubeVideo", "views": 1000, "likes": 200}))
 
     # list_one = [1, 2, 3]
     # list_two = list_one
     # list_two[1] = 5
     # print(list_one)
     # print(list_two)
+
+
