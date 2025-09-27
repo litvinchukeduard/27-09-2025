@@ -31,8 +31,9 @@ class VideoContent:
         #     'release_date': self.release_date.strftime('%d-%m-%Y'), #2025-09-27 27-09-2025
         #     'price': self.price
         # }
-        dict = self.__dict__
+        dict = deepcopy(self.__dict__)
         dict['release_date'] = self.release_date.strftime('%d-%m-%Y')
+        dict['type'] = 'VideoContent'
         return dict
 
     def calculateQualityNumber(self):
@@ -89,7 +90,7 @@ class YouTubeVideo(VideoContent):
     __likes: int
 
     def as_json(self):
-        parent_dict = deepcopy(super().as_json())
+        parent_dict = super().as_json()
         del parent_dict['_YouTubeVideo__views']
         del parent_dict['_YouTubeVideo__likes']
         parent_dict['views'] = self.views
@@ -127,6 +128,7 @@ if __name__ == '__main__':
     # # movie = Movie("Pulp Fiction", date.today(), 3, 'Tarantino')
     # # print(movie.calculateQualityNumber())
     video = YouTubeVideo("Test", 100, date.today(), 1000, 200)
+    print(dir(video))
 
     # # print(video.__views)
 
